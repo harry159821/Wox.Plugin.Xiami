@@ -3,11 +3,13 @@
 import urllib2,json
 from bs4 import BeautifulSoup
 import play
+import thread
 true = True
 null = None
 false = False
 
 def query(Allkey):
+	Allkey = Allkey.encode("utf-8")
 	key = Allkey.split(" ")[1]
 	if not key:
 		return ""
@@ -58,13 +60,17 @@ def getDetail(id):
 	html = requests(url)
 	html = html.replace('\/','/')
 	html = json.loads(html)
-	print html['location']
+	#print html['location']
 	#print html['pic']
 	#print html['lyric']
 	return html
 
 def playMp3(context,url):
+	thread.start_new_thread(playThread,(1,url))
+	#play.play(url)
+
+def playThread(num,url):
 	play.play(url)
 
 if __name__ == '__main__':
-	query(u"xiami chelly ")
+	print query(u"xiami 苏打绿 ")
