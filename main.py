@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import urllib,urllib2,json
 from bs4 import BeautifulSoup
-import play,sys
+import play,sys,re
 import thread
 true = True
 null = None
@@ -10,55 +10,88 @@ false = False
 
 def query(Allkey):
 	Allkey = Allkey.encode("utf-8")
-	key = ' '.join(Allkey.split(" ")[1:])
+	Allkey = Allkey.split(" ")
+	key = ' '.join(Allkey[1:])
 	if not key:
 		return ""
 	results = []
-	url = 'http://www.xiami.com/search?key='+key.replace(" ",'+')		
-	print url
-	html = requests(url)
-	bs = BeautifulSoup(html)
-	for i in bs.select("tbody tr"):
-		res = {}
+	page = 1
+	try:
+		if 0<int(Allkey[-1])<9:
+			page = int(Allkey[-1])
+			key = ' '.join(Allkey[1:-1])
+	except Exception, e:
+		print e
+	if page == 1:
+		url = 'http://www.xiami.com/web/spark'
+		html = requests(url)
+		data = re.findall(r'''(_xiamitoken = '([\w\W]*?)';).*?''',html)
+		xiamitoken = data[0][1]
+		url = 'http://www.xiami.com/web/search-songs?key=%s&_xiamitoken=%s'%(key,xiamitoken)
+		url = url.replace(' ',"+")
+		print url
+		html = requests(url)
+		html = json.loads(html)
+		for item in html:
+			res = {}
+			#print item['title']
+			#print item['author']
+			#print item['src']
+			res["Title"] = item['title']
+			res["SubTitle"] = item['author']
+			res["ActionName"] = 'playMp3'
+			res["IcoPath"] = './icon.png'
+			res["ActionPara"] = item['src']
+			results.append(res)
+			print res
+		return json.dumps(results)
+	else:
+		#url = 'http://www.xiami.com/search?key='+key.replace(" ",'+')
+		url = 'http://www.xiami.com/search/song/page/%s?&key=%s'%(page,key)
+		print url
+		html = requests(url)
+		bs = BeautifulSoup(html)
+		for i in bs.select("tbody tr"):
+			res = {}
 
-		temp =  i.select("td.chkbox input")
-		songID = temp[0]["value"]#歌曲id
+			temp =  i.select("td.chkbox input")
+			songID = temp[0]["value"]#歌曲id
 
-		detail = getDetail(songID)
-		if detail:
-			songUrl = detail['location']
-		else:
-			songUrl = getUrl(songID)
-		print songUrl
+			songUrl = ''
+			
+			detail = getDetail(songID)
+			if detail:
+				songUrl = detail['location']
+			else:
+				songUrl = getUrl(songID)
 
-		temp =  i.select("td.song_name a")
-		songName = temp[0]["title"]#歌曲名称
-		songName = songName.replace(u'该艺人演唱的其他版本','')
+			temp =  i.select("td.song_name a")
+			songName = temp[0]["title"]#歌曲名称
+			songName = songName.replace(u'该艺人演唱的其他版本','')
 
-		temp =  i.select("td.song_album a")
-		songAlbum = temp[0].text#歌曲专辑
+			temp =  i.select("td.song_album a")
+			songAlbum = temp[0].text#歌曲专辑
 
-		temp =  i.select("td.song_artist a")
-		SongArtist = temp[0].text#歌曲演唱者
-		SongArtist = SongArtist.replace('\t','')
-		SongArtist = SongArtist.replace('\n','')
-		SongArtist = SongArtist.replace('\r','')
-		SongArtist = SongArtist.replace(' ','')
-		SongArtist = SongArtist.replace(u'该艺人演唱的其他版本','')
+			temp =  i.select("td.song_artist a")
+			SongArtist = temp[0].text#歌曲演唱者
+			SongArtist = SongArtist.replace('\t','')
+			SongArtist = SongArtist.replace('\n','')
+			SongArtist = SongArtist.replace('\r','')
+			SongArtist = SongArtist.replace(' ','')
+			SongArtist = SongArtist.replace(u'该艺人演唱的其他版本','')
 
-		if songName:
-			songName = '-'+songName
-		if not songUrl:
-			'GetNoMp3'
-			songName += '- GetNoMp3'
-		res["Title"] = SongArtist+songName
-		res["SubTitle"] = songAlbum
-		res["ActionName"] = 'playMp3'
-		res["IcoPath"] = './icon.png'
-		res["ActionPara"] = songUrl
-		results.append(res)
-
-	return json.dumps(results)
+			if songName:
+				songName = '-'+songName
+			if not songUrl:
+				'GetNoMp3'
+				songName += '- GetNoMp3'
+			res["Title"] = SongArtist+songName
+			res["SubTitle"] = songAlbum
+			res["ActionName"] = 'playMp3'
+			res["IcoPath"] = './icon.png'
+			res["ActionPara"] = songUrl
+			results.append(res)
+		return json.dumps(results)
 
 def requests(url,timeouts=5):
 	header = {
@@ -124,5 +157,6 @@ def playThread(num,url):
 	play.play(url)
 
 if __name__ == '__main__':
-	print query(u"xiami 苏打绿")
+	#print query(u"xiami 苏打绿 1")
+	print query(u"xiami chelly")
 	#print query(u"xiami fallen down")
