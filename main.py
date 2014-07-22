@@ -105,10 +105,10 @@ def getDetail(id):
 def getUrl(id):
 	url = 'http://www.xiami.com/song/playlist/id/'+id+'/object_name/default/object_id/0'
 	html = requests(url)
-	bs = BeautifulSoup(html)
-	bs = BeautifulSoup(str(bs))
 	url = ''
-	try:
+	try:	
+		bs = BeautifulSoup(html)
+		bs = BeautifulSoup(str(bs))
 		url = location_dec(bs.select('location')[0].text)
 	except Exception, e:
 		print e
@@ -124,5 +124,5 @@ def playThread(num,url):
 	play.play(url)
 
 if __name__ == '__main__':
-	print query(u"xiami chelly")
+	print query(u"xiami 苏打绿")
 	#print query(u"xiami fallen down")
