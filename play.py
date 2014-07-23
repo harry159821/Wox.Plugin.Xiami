@@ -21,10 +21,9 @@ class Player():
         f0.close()
         self.TcpThread = tcpThread(self)
         self.TcpThread.start()
-        
+
     def play(self):
-
-
+        self.stopFlag = True
         self.mp3 = []
         self.i = 0
         #dm = muxer.Demuxer(str.split(self.file_name, '.')[-1].lower())
@@ -51,7 +50,8 @@ class Player():
         #self.downloadthread = downloadThread(self.f, self.mp3)
         #self.downloadthread.start()
 
-
+        while self.stopFlag:
+            pass
 
         print 'first read long:%s'%(len(s))
         while len(s) and self.tcpFlag:
@@ -157,7 +157,7 @@ class tcpThread(threading.Thread):
                 pass
         print 'no server exits,I brcome server'
 
-        time.sleep(1)
+        self.master.stopFlag = False
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
         for p in range(9000,9002):
             try:
