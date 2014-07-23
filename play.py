@@ -19,8 +19,12 @@ class Player():
         f0 = file('start.txt','a')
         f0.write('start\n')
         f0.close()
-
+        self.TcpThread = tcpThread(self)
+        self.TcpThread.start()
+        
     def play(self):
+
+
         self.mp3 = []
         self.i = 0
         #dm = muxer.Demuxer(str.split(self.file_name, '.')[-1].lower())
@@ -41,11 +45,13 @@ class Player():
 
         self.tcpFlag = True
 
+        #self.TcpThread = tcpThread(self)
+        #self.TcpThread.start()
+
         #self.downloadthread = downloadThread(self.f, self.mp3)
         #self.downloadthread.start()
 
-        self.TcpThread = tcpThread(self)
-        self.TcpThread.start()
+
 
         print 'first read long:%s'%(len(s))
         while len(s) and self.tcpFlag:
@@ -102,7 +108,7 @@ class Player():
                 s = self.f.read(2000)
             except Exception, e:
                 s = 0
-            i = i+1
+            i = i+101
         print 'Download Complete,Long:%s,Use time:%s'%(i,time.time()-TIME)
         thread.exit_thread()
 
