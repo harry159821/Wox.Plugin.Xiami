@@ -22,6 +22,7 @@ def query(Allkey):
 			key = ' '.join(Allkey[1:-1])
 	except Exception, e:
 		print e
+	print key
 	print 'page',page
 	if page == 1:
 		print 'spark'
@@ -45,7 +46,6 @@ def query(Allkey):
 			res["IcoPath"] = './icon.png'
 			res["ActionPara"] = item['src']
 			results.append(res)
-			print res
 		return json.dumps(results)
 	else:
 		#url = 'http://www.xiami.com/search?key='+key.replace(" ",'+')
@@ -151,14 +151,23 @@ def getUrl(id):
 
 def playMp3(context,url):
 	thread.start_new_thread(playThread,(1,url))
-	thread.exit()
+	#thread.exit()
 	#play.play(url)
 	#sys.exit(0)
 
 def playThread(num,url):
-	play.Player(url)
+	f = open('ThreadLog.txt','a')
+	sys.stdout = f
+	try:
+		m = play.Player(url)
+		m.play()
+	except Exception, e:
+		print e
+	f.write('play over\n'+url)
+	f.close()
+	thread.exit()
 
 if __name__ == '__main__':
 	#print query(u"xiami 苏打绿 1")
-	print query(u"xiami chelly ")
+	print query(u"xiami chelly")
 	#print query(u"xiami fallen down")
