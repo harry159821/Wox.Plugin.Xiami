@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+# -*- coding:utf-8 -*-
 import time
 TIME =  time.time()
 import pymedia.audio.acodec as acodec
 import pymedia.audio.sound as sound
 import pymedia.muxer as muxer
 import urllib2,thread,threading,sys
+import socket
 
 class Player():
     '''
@@ -15,10 +17,9 @@ class Player():
         self.i = 0
         #self.play()
         f0 = file('start.txt','a')
-        f0.write('start')
+        f0.write('start\n')
         f0.close()
 
-    #@classmethod
     def play(self):
         self.mp3 = []
         self.i = 0
@@ -38,10 +39,16 @@ class Player():
         s = self.f.read(10000)
         #thread.start_new_thread(self.download,())
 
-        downloadthread = downloadThread(self.f, self.mp3)
-        downloadthread.start()
+        self.tcpFlag = True
+
+        #self.downloadthread = downloadThread(self.f, self.mp3)
+        #self.downloadthread.start()
+
+        self.TcpThread = tcpThread(self)
+        self.TcpThread.start()
+
         print 'first read long:%s'%(len(s))
-        while len(s):
+        while len(s) and self.tcpFlag:
             frames = dm.parse(s)
             if frames:
                 for fr in frames:
@@ -61,17 +68,17 @@ class Player():
                         except Exception, e:
                             print e
                             #sys.exit(0)
-
+            '''
             if self.i<len(self.mp3):
                 s = self.mp3[self.i]
             else:
                 s = []
             self.i = self.i + 1
-            
-            #s = self.f.read(2000)
+            '''         
+            s = self.f.read(2000)
         print 'stop'
         f1 = file('stoped.txt','a')
-        f1.write('stop')
+        f1.write('stop\n')
         f1.close()
         #sys.exit(0)
         '''
@@ -80,11 +87,16 @@ class Player():
             time.sleep(.05)
         '''
 
+    def stop(self):
+        print 'tcpFlag stop'
+        self.tcpFlag =False
+        #self.downloadthread.stop()
+
     def download(self):
         print 'download start'
         s = self.f.read(2000)
         i = 0
-        while len(s):
+        while len(s) and self.tcpFlag:
             self.mp3.append(s)
             try:
                 s = self.f.read(2000)
@@ -115,6 +127,68 @@ class downloadThread(threading.Thread):
 
     def stop(self):
         self.thread_stop = True
+
+class tcpThread(threading.Thread):
+    def __init__(self,master):
+        threading.Thread.__init__(self)
+        self.master = master
+
+    def run(self):
+        print 'link server start'
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
+        for i in range(9000,9002):
+            try:
+                sock.connect(('localhost', i))
+                sock.send('test')
+                if sock.recv(1024) == 'welcome to server!':
+                    print 'link server success',i
+                    sock.send('stop')
+                    print sock.recv(1024)
+                    sock.close()
+                break
+            except Exception,e:
+                print '1',i,e
+                pass
+        print 'no server exits,I brcome server'
+
+        time.sleep(1)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
+        for p in range(9000,9002):
+            try:
+                sock.bind(('localhost', p))
+                print 'server listen start',p
+                break
+            except Exception,e:
+                #print p,e
+                pass
+
+        self.stop = False
+        sock.listen(5)
+        while not self.stop:
+            #等待下一个客户端连结
+            connection, address = sock.accept()
+            #连结是一个新的socket
+            print 'Server connected by', address
+            while not self.stop:
+                try:
+                    connection.settimeout(5)
+                    #读取客户端套接字的下一行
+                    data = connection.recv(1024)
+                    #如果没有数量的话，那么跳出循环
+                    if not data: break
+                    if data == 'test':  
+                        connection.send('welcome to server!')  
+                    else:  
+                        connection.send('please go out!')
+                        print 'ok i go out'                    
+                        self.stop = True
+                except socket.timeout:  
+                    print 'time out'                
+            #当socket关闭时eof
+            connection.close()
+
+        self.master.stop()
+        print 'tcp over'
 
 if __name__ == "__main__":
     print 'python Init Time:%s'%(time.time()-TIME)
