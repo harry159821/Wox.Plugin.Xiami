@@ -22,7 +22,9 @@ def query(Allkey):
 			key = ' '.join(Allkey[1:-1])
 	except Exception, e:
 		print e
+	print 'page',page
 	if page == 1:
+		print 'spark'
 		url = 'http://www.xiami.com/web/spark'
 		html = requests(url)
 		data = re.findall(r'''(_xiamitoken = '([\w\W]*?)';).*?''',html)
@@ -154,9 +156,9 @@ def playMp3(context,url):
 	#sys.exit(0)
 
 def playThread(num,url):
-	play.play(url)
+	play.Player(url)
 
 if __name__ == '__main__':
 	#print query(u"xiami 苏打绿 1")
-	print query(u"xiami chelly")
+	print query(u"xiami chelly ")
 	#print query(u"xiami fallen down")
