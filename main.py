@@ -42,14 +42,14 @@ def query(Allkey):
 			#print item['src']
 			res["Title"] = item['title']
 			res["SubTitle"] = item['author']
-			res["ActionName"] = 'playMp3'
+			res["ActionName"] = 'playMp3_2'
 			res["IcoPath"] = './icon.png'
 			res["ActionPara"] = item['src']
 			results.append(res)
 		return json.dumps(results)
 	else:
 		#url = 'http://www.xiami.com/search?key='+key.replace(" ",'+')
-		url = 'http://www.xiami.com/search/song/page/%s?&key=%s'%(page,key)
+		url = 'http://www.xiami.com/search/song/page/%s?&key=%s'%(page,key.replace(" ",'+'))
 		print url
 		html = requests(url)
 		bs = BeautifulSoup(html)
@@ -61,11 +61,13 @@ def query(Allkey):
 
 			songUrl = ''
 			
+			'''
 			detail = getDetail(songID)
 			if detail:
 				songUrl = detail['location']
 			else:
 				songUrl = getUrl(songID)
+			'''
 
 			temp =  i.select("td.song_name a")
 			songName = temp[0]["title"]#歌曲名称
@@ -82,16 +84,19 @@ def query(Allkey):
 			SongArtist = SongArtist.replace(' ','')
 			SongArtist = SongArtist.replace(u'该艺人演唱的其他版本','')
 
+			'''
 			if songName:
 				songName = '-'+songName
 			if not songUrl:
 				'GetNoMp3'
 				songName += '- GetNoMp3'
+			'''
 			res["Title"] = SongArtist+songName
 			res["SubTitle"] = songAlbum
 			res["ActionName"] = 'playMp3'
 			res["IcoPath"] = './icon.png'
-			res["ActionPara"] = songUrl
+			#res["ActionPara"] = songUrl
+			res['ActionPara'] = songID
 			results.append(res)
 		return json.dumps(results)
 
@@ -141,7 +146,7 @@ def getUrl(id):
 	url = 'http://www.xiami.com/song/playlist/id/'+id+'/object_name/default/object_id/0'
 	html = requests(url)
 	url = ''
-	try:	
+	try:
 		bs = BeautifulSoup(html)
 		bs = BeautifulSoup(str(bs))
 		url = location_dec(bs.select('location')[0].text)
@@ -149,11 +154,22 @@ def getUrl(id):
 		print e
 	return url
 
-def playMp3(context,url):
-	thread.start_new_thread(playThread,(1,url))
+def getRealUrl(songID):
+	detail = getDetail(songID)
+	if detail:
+		songUrl = detail['location']
+	else:
+		songUrl = getUrl(songID)
+	return songUrl
+
+def playMp3(context,songID):
+	thread.start_new_thread(playThread,(1,getRealUrl(songID)))
 	#thread.exit()
 	#play.play(url)
 	#sys.exit(0)
+
+def playMp3_2(context,songUrl):
+	thread.start_new_thread(playThread,(1,songUrl))
 
 def playThread(num,url):
 	f = open('ThreadLog.txt','a')
@@ -169,5 +185,8 @@ def playThread(num,url):
 
 if __name__ == '__main__':
 	#print query(u"xiami 苏打绿 1")
-	print query(u"xiami chelly")
-	#print query(u"xiami fallen down")
+	#print query(u"xiami chelly")
+	print query(u"xiami fallen down 2")
+	#list0 = json.loads(query(u"xiami by2 2"))
+	#for i in list0:
+	#	print getRealUrl(i['ActionPara'])
